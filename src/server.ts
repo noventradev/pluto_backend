@@ -1,4 +1,4 @@
-import { prisma } from "@db/prisma.client";
+import prisma from "@db/prisma.client";
 import app from "./app";
 import dotenv from "dotenv";
 

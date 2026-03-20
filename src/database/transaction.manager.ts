@@ -1,8 +1,11 @@
 // transaction.manager.ts
-import { prisma } from './prisma.client';
+import { Prisma } from "@prisma/client";
+import prisma from "./prisma.client";
 
-export const runTransaction = async (cb: any) => {
-  return prisma.$transaction(async (tx: any) => {
+export const runTransaction = async <T>(
+  cb: (tx: Prisma.TransactionClient) => Promise<T>,
+): Promise<T> => {
+  return prisma.$transaction(async (tx) => {
     return cb(tx);
   });
 };
