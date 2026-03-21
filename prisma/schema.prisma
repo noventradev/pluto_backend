@@ -2,6 +2,37 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 // Get a free hosted Postgres database in seconds: `npx create-db`
+enum Frequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+  ONE_TIME
+}
+
+enum EntryStatus {
+  PENDING
+  RECEIVED
+  COMPLETED
+}
+
+enum ExpenseStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum IncomeType {
+  ONE_TIME
+  RECURRING
+  CONTRACT
+}
+
+enum Currency {
+  INR
+  USD
+  GBP
+}
 
 generator client {
   provider = "prisma-client-js"
@@ -20,26 +51,108 @@ model User {
   city      String?
   state     String?
   country   String?
-  isActive  Boolean @default(true)
+
+  isActive Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+
+  // Multi-tenant membership
   orgMemberships OrganizationUser[]
-  // incomes         IncomeSource[]
-  // deals           Deal[]
+
+  // Finance relations
+  incomeSources   IncomeSource[]
+  expenseCategories ExpenseCategory[]
+
+  // Audit tracking
+  createdIncomeEntries  IncomeEntry[]  @relation("CreatedIncomeEntries")
+  updatedIncomeEntries  IncomeEntry[]  @relation("UpdatedIncomeEntries")
+  deletedIncomeEntries  IncomeEntry[]  @relation("DeletedIncomeEntries")
+  createdExpenseEntries ExpenseEntry[] @relation("CreatedExpenseEntries")
+  updatedExpenseEntries ExpenseEntry[] @relation("UpdatedExpenseEntries")
+  deletedExpenseEntries ExpenseEntry[] @relation("DeletedExpenseEntries")
+
+  // Organization ownership
+  ownedOrganizations Organization[]
+
+  // Organization audit
+  organizationsCreated Organization[] @relation("OrganizationCreatedBy")
+  organizationsUpdated Organization[] @relation("OrganizationUpdatedBy")
+  organizationsDeleted Organization[] @relation("OrganizationDeletedBy")
+
+  // Role audit
+  rolesCreated Role[] @relation("RoleCreatedBy")
+  rolesUpdated Role[] @relation("RoleUpdatedBy")
+  rolesDeleted Role[] @relation("RoleDeletedBy")
+
+  // OrgUser audit
+  orgUsersCreated OrganizationUser[] @relation("OrgUserCreatedBy")
+  orgUsersUpdated OrganizationUser[] @relation("OrgUserUpdatedBy")
+  orgUsersDeleted OrganizationUser[] @relation("OrgUserDeletedBy")
+
+  // Income audit
+  incomeSourcesCreated IncomeSource[] @relation("IncomeSourceCreatedBy")
+  incomeSourcesUpdated IncomeSource[] @relation("IncomeSourceUpdatedBy")
+  incomeSourcesDeleted IncomeSource[] @relation("IncomeSourceDeletedBy")
+  incomeStreamsCreated IncomeStream[] @relation("IncomeStreamCreatedBy")
+  incomeStreamsUpdated IncomeStream[] @relation("IncomeStreamUpdatedBy")
+  incomeStreamsDeleted IncomeStream[] @relation("IncomeStreamDeletedBy")
+
+  // Expense audit
+  expenseCategoriesCreated ExpenseCategory[] @relation("ExpenseCategoryCreatedBy")
+  expenseCategoriesUpdated ExpenseCategory[] @relation("ExpenseCategoryUpdatedBy")
+  expenseCategoriesDeleted ExpenseCategory[] @relation("ExpenseCategoryDeletedBy")
+  expenseStreamsCreated ExpenseStream[] @relation("ExpenseStreamCreatedBy")
+  expenseStreamsUpdated ExpenseStream[] @relation("ExpenseStreamUpdatedBy")
+  expenseStreamsDeleted ExpenseStream[] @relation("ExpenseStreamDeletedBy")
 }
 
 model Organization {
-  id          String             @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
   orgEmail    String?
   description String?
   url         String?
   contactNo   String?
   country     String?
-  createdAt   DateTime           @default(now())
-  users       OrganizationUser[]
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+
+  // Relations
+  createdByUser User? @relation("OrganizationCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("OrganizationUpdatedBy", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("OrganizationDeletedBy", fields: [deletedBy], references: [id])
+
+  // Ownership
+  ownerId String?
+  owner   User? @relation(fields: [ownerId], references: [id])
+
+  // Members
+  users OrganizationUser[]
+
+  // Finance relations
+  incomeSources    IncomeSource[]
+  incomeStreams    IncomeStream[]
+  incomeEntries    IncomeEntry[]
+
+  expenseCategories ExpenseCategory[]
+  expenseStreams    ExpenseStream[]
+  expenseEntries    ExpenseEntry[]
+
+  @@index([ownerId])
 }
 
 model Role {
@@ -47,15 +160,34 @@ model Role {
   name        String
   description String?
 
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+
+  createdByUser User? @relation("RoleCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("RoleUpdatedBy", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("RoleDeletedBy", fields: [deletedBy], references: [id])
+
   permissions RolePermission[]
   users       OrganizationUser[]
+
+  @@unique([name])
 }
 
 model Permission {
-  id          String           @id @default(uuid())
-  name        String           @unique
+  id          String @id @default(uuid())
+  name        String @unique
   description String?
-  roles       RolePermission[]
+
+  createdAt DateTime @default(now())
+
+  roles RolePermission[]
 }
 
 model RolePermission {
@@ -65,6 +197,8 @@ model RolePermission {
 
   role       Role       @relation(fields: [roleId], references: [id])
   permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
 }
 
 model OrganizationUser {
@@ -73,11 +207,226 @@ model OrganizationUser {
   organizationId String
   roleId         String
 
+  isActive Boolean @default(true)
+
   joinedAt DateTime @default(now())
+  leftAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  // REQUIRED FIELDS
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+
+  // RELATIONS
+  createdByUser User? @relation("OrgUserCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("OrgUserUpdatedBy", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("OrgUserDeletedBy", fields: [deletedBy], references: [id])
 
   user         User         @relation(fields: [userId], references: [id])
   organization Organization @relation(fields: [organizationId], references: [id])
   role         Role         @relation(fields: [roleId], references: [id])
 
   @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model IncomeSource {
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String
+
+  sourceOfIncome   String
+  name   String
+  type  IncomeType
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  createdByUser User? @relation("IncomeSourceCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("IncomeSourceUpdatedBy", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("IncomeSourceDeletedBy", fields: [deletedBy], references: [id])
+
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  streams IncomeStream[]
+
+  @@index([organizationId])
+}
+
+model IncomeStream {
+  id             String   @id @default(uuid())
+  organizationId String
+  sourceId       String
+
+  startDate DateTime
+  endDate   DateTime?
+
+  frequency  Frequency
+  baseAmount Float
+  currency   Currency
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+
+  createdByUser User? @relation("IncomeStreamCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("IncomeStreamUpdatedBy", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("IncomeStreamDeletedBy", fields: [deletedBy], references: [id])
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  source       IncomeSource @relation(fields: [sourceId], references: [id])
+
+  entries IncomeEntry[]
+
+  @@index([organizationId])
+  @@index([sourceId])
+}
+
+model IncomeEntry {
+  id             String   @id @default(uuid())
+  organizationId String
+  streamId       String
+
+  date DateTime
+
+  estimatedAmount Float?
+  actualAmount    Float?
+
+  status EntryStatus @default(PENDING)
+
+  // metadata Json?
+  note     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+
+  createdByUser User? @relation("CreatedIncomeEntries", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("UpdatedIncomeEntries", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("DeletedIncomeEntries", fields: [deletedBy], references: [id])
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  stream       IncomeStream @relation(fields: [streamId], references: [id])
+  
+  @@index([organizationId])
+  @@index([streamId])
+}
+
+model ExpenseCategory {
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String
+
+  name        String
+  type        String
+  description String?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+
+  createdByUser User? @relation("ExpenseCategoryCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("ExpenseCategoryUpdatedBy", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("ExpenseCategoryDeletedBy", fields: [deletedBy], references: [id])
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  streams ExpenseStream[]
+
+  @@index([organizationId])
+}
+
+model ExpenseStream {
+  id             String @id @default(uuid())
+  organizationId String
+  categoryId     String
+
+  startDate DateTime
+  endDate   DateTime?
+
+  frequency      Frequency
+  baseAmount         Float
+  currency       String
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+
+  createdByUser User? @relation("ExpenseStreamCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("ExpenseStreamUpdatedBy", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("ExpenseStreamDeletedBy", fields: [deletedBy], references: [id])
+
+  organization Organization   @relation(fields: [organizationId], references: [id])
+  category     ExpenseCategory @relation(fields: [categoryId], references: [id])
+
+  entries ExpenseEntry[]
+
+  @@index([organizationId])
+  @@index([categoryId])
+}
+
+model ExpenseEntry {
+  id             String @id @default(uuid())
+  organizationId String
+  streamId       String
+
+  date DateTime
+  amount Float
+
+  status ExpenseStatus @default(PENDING)
+  note     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+
+  createdByUser User? @relation("CreatedExpenseEntries", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("UpdatedExpenseEntries", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("DeletedExpenseEntries", fields: [deletedBy], references: [id])
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  stream       ExpenseStream @relation(fields: [streamId], references: [id])
+
+  @@index([organizationId])
+  @@index([streamId])
 }
