@@ -6,10 +6,10 @@ import { createIncomeSchema, updateIncomeSchema } from "./Income.validator";
 import { UpdateIncomeRequestDto } from "./Income.types";
 
 const STATIC_USER = {
-    id: "9e12559d-b7c2-4c1c-9f4c-b4de4ec80f89",
-    email: "[noventradevelopers@gmail.com]",
-    role: "SUPER_ADMIN",
-    organizationId: "559c053b-0512-43bf-bbf9-bdb25734b388"
+    id: process.env.SUPER_ADMIN_ID,
+    email: process.env.SUPER_ADMIN_EMAIL,
+    role: process.env.SUPER_ADMIN_ROLE,
+    organizationId: process.env.SUPER_ADMIN_ORGANIZATION_ID
 };
 
 export const IncomeController = {

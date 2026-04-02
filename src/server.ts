@@ -9,11 +9,9 @@ const PORT = process.env.PORT || 5000;
 async function startServer() {
   try {
     await prisma.$connect();
-    console.log("✅ Database connected");
-
-    // Initialize background jobs
-    initIncomeEntryJob();
-    console.log("Background jobs initialized");
+    console.log("Database connected");
+    // initIncomeEntryJob();
+    // console.log("Background jobs initialized");
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
