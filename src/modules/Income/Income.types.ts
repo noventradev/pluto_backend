@@ -19,6 +19,7 @@ export interface IncomeStreamData {
   frequency: Frequency;
   baseAmount: number;
   currency: Currency;
+  isRecurring: boolean;
   isActive?: boolean;
   createdBy?: string;
 }
@@ -35,6 +36,7 @@ export interface IncomeEntryData {
 }
 
 export interface CreateIncomeRequestDto {
+  isRecurring: boolean;
   source: {
     sourceOfIncome: string;
     name: string;
@@ -56,18 +58,24 @@ export interface CreateIncomeRequestDto {
   };
 }
 
-export type UpdateIncomeRequestDto = Partial<CreateIncomeRequestDto>;
+export type UpdateIncomeRequestDto = Partial<Omit<CreateIncomeRequestDto, 'entry' | 'stream'>> & {
+  stream?: Partial<CreateIncomeRequestDto['stream']> & { id?: string };
+  entry?: Partial<CreateIncomeRequestDto['entry']> & { id?: string };
+};
 
 export interface IncomeCreatePayload {
+  isRecurring: boolean;
   source: IncomeSourceData;
   stream: Omit<IncomeStreamData, "sourceId">;
   entries: Omit<IncomeEntryData, "streamId">[];
 }
 
 export interface IncomeUpdatePayload {
-  source?: Partial<IncomeSourceData>;
-  stream?: Partial<IncomeStreamData>;
+  isRecurring?: boolean;
+  source?: Partial<IncomeSourceData & { id: string }>;
+  stream?: Partial<IncomeStreamData & { id: string }>;
   entries?: IncomeEntryData[];
+  entryToUpdate?: Partial<IncomeEntryData> & { id: string };
   deleteEntryIds?: string[];
 }
 

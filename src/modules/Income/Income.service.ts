@@ -14,7 +14,7 @@ export const IncomeService = {
         dto: CreateIncomeRequestDto,
         user: AuthUser
     ) {
-        const { source, stream, entry } = dto;
+        const { source, stream, entry, isRecurring } = dto;
         const today = new Date();
 
         // If endDate is in the future or null, we only generate entries up to today.
@@ -30,6 +30,7 @@ export const IncomeService = {
         );
 
         const payload: IncomeCreatePayload = {
+            isRecurring,
             source: {
                 ...source,
                 organizationId: user.organizationId!,
@@ -39,6 +40,7 @@ export const IncomeService = {
 
             stream: {
                 ...stream,
+                isRecurring,
                 organizationId: user.organizationId!,
                 createdBy: user.id,
             },
@@ -77,6 +79,7 @@ export const IncomeService = {
         const existingStream = existingIncome.streams[0]; // Assuming one stream for now
         if (!existingStream) throw new Error("Income stream not found");
 
+        const existingEntries = existingStream.entries;
         const today = new Date();
         const updatedSource = dto.source || {};
         const updatedStreamDto = dto.stream || {};
@@ -90,55 +93,122 @@ export const IncomeService = {
             baseAmount: (updatedStreamDto as any).baseAmount !== undefined ? (updatedStreamDto as any).baseAmount : existingStream.baseAmount,
         };
 
-        const isFutureStream = !mergedStream.endDate || mergedStream.endDate > today;
-        const upToDate = isFutureStream ? today : undefined;
+        const isRecurring = dto.isRecurring !== undefined ? dto.isRecurring : (existingStream as any).isRecurring;
 
-        const newEntryDates = generateEntryDates(
-            mergedStream.startDate,
-            mergedStream.endDate,
-            mergedStream.frequency,
-            upToDate
-        );
+        let newEntryDates: Date[] = [];
+        if (isRecurring) {
+            const isFutureStream = !mergedStream.endDate || mergedStream.endDate > today;
+            const upToDate = isFutureStream ? today : undefined;
 
-        const existingEntries = existingStream.entries;
+            newEntryDates = generateEntryDates(
+                mergedStream.startDate,
+                mergedStream.endDate,
+                mergedStream.frequency,
+                upToDate
+            );
+        } else {
+            const singleDate = updatedEntryDto.date ? new Date(updatedEntryDto.date) : (existingEntries[0]?.date || mergedStream.startDate);
+            newEntryDates = [new Date(singleDate)];
+        }
+
         const existingDatesMap = new Map(
             existingEntries.map((e) => [e.date.getTime(), e])
         );
 
         const entriesToCreate: IncomeEntryData[] = [];
         const deleteEntryIds: string[] = [];
+        let entryToUpdate: any = null;
+
+        if (updatedEntryDto.id) {
+            entryToUpdate = {
+                id: updatedEntryDto.id,
+                date: updatedEntryDto.date ? new Date(updatedEntryDto.date) : undefined,
+                actualAmount: updatedEntryDto.actualAmount !== undefined ? updatedEntryDto.actualAmount : undefined,
+                note: updatedEntryDto.note !== undefined ? updatedEntryDto.note : undefined,
+            };
+        }
 
         // Check which new dates need new entries
         newEntryDates.forEach((date) => {
             const existingEntry = existingDatesMap.get(date.getTime());
-            if (!existingEntry) {
+
+            // Skip entry creation if we are updating an existing one with an explicit ID
+            // or if the date already has an entry.
+            if (!existingEntry && (!entryToUpdate || date.getTime() !== entryToUpdate.date?.getTime())) {
                 entriesToCreate.push({
                     date,
                     estimatedAmount: mergedStream.baseAmount,
-                    actualAmount: date.getTime() === updatedEntryDto.date?.getTime() ? updatedEntryDto.actualAmount : null,
-                    note: date.getTime() === updatedEntryDto.date?.getTime() ? updatedEntryDto.note : null,
+                    actualAmount: null,
+                    note: null,
                     organizationId: user.organizationId!,
                     createdBy: user.id,
                 });
             }
         });
 
-        // Determine which existing entries to delete
-        // Delete only those that are NOT in the new schedule AND are still PENDING without actualAmount
         const newDatesSet = new Set(newEntryDates.map((d) => d.getTime()));
         existingEntries.forEach((e) => {
-            if (!newDatesSet.has(e.date.getTime()) && e.status === "PENDING" && e.actualAmount === null) {
+            const isTargetOfUpdate = entryToUpdate && e.id === entryToUpdate.id;
+            if (!isTargetOfUpdate && !newDatesSet.has(e.date.getTime()) && e.status === "PENDING" && e.actualAmount === null) {
                 deleteEntryIds.push(e.id);
             }
         });
 
         const payload: IncomeUpdatePayload = {
+            isRecurring,
             source: updatedSource,
-            stream: updatedStreamDto,
+            stream: {
+                ...updatedStreamDto,
+                isRecurring,
+            },
             entries: entriesToCreate,
+            entryToUpdate: entryToUpdate || undefined,
             deleteEntryIds,
         };
 
         return IncomeRepository.updateFullIncome(id, payload);
     },
+
+    async syncStreamEntries(streamId: string, upToDate: Date = new Date()) {
+        const stream = await IncomeRepository.getStreamWithLastEntry(streamId);
+
+        if (!stream || !stream.isRecurring) return;
+
+        const lastEntry = stream.entries[0];
+        const lastDate = lastEntry ? new Date(lastEntry.date) : new Date(stream.startDate);
+
+        let nextStartDate = new Date(lastDate);
+        if (lastEntry) {
+            switch (stream.frequency) {
+                case "DAILY": nextStartDate.setDate(nextStartDate.getDate() + 1); break;
+                case "WEEKLY": nextStartDate.setDate(nextStartDate.getDate() + 7); break;
+                case "MONTHLY": nextStartDate.setMonth(nextStartDate.getMonth() + 1); break;
+                case "YEARLY": nextStartDate.setFullYear(nextStartDate.getFullYear() + 1); break;
+                case "ONE_TIME": return;
+            }
+        }
+
+        if (nextStartDate > upToDate) return;
+
+        const missingDates = generateEntryDates(
+            nextStartDate,
+            stream.endDate,
+            stream.frequency,
+            upToDate
+        );
+
+        if (missingDates.length > 0) {
+            const newEntries = missingDates.map(date => ({
+                date,
+                streamId: stream.id,
+                organizationId: stream.organizationId,
+                estimatedAmount: stream.baseAmount,
+                actualAmount: null,
+                status: "PENDING",
+                createdBy: stream.createdBy,
+            }));
+
+            await IncomeRepository.createPendingEntries(newEntries);
+        }
+    }
 };

@@ -27,6 +27,7 @@ export const updateIncomeSchema = z.object({
         type: z.enum(["ONE_TIME", "RECURRING", "CONTRACT"]).optional(),
     }).optional(),
     stream: z.object({
+        id: z.string().optional(),
         startDate: z.string().transform((val) => new Date(val)).optional(),
         endDate: z.string().optional().transform((val) => val ? new Date(val) : undefined).optional(),
         frequency: z.enum(["DAILY", "WEEKLY", "MONTHLY", "YEARLY", "ONE_TIME"]).optional(),
@@ -34,6 +35,7 @@ export const updateIncomeSchema = z.object({
         currency: z.enum(["INR", "USD", "GBP"]).optional(),
     }).optional(),
     entry: z.object({
+        id: z.string().optional(),
         date: z.string().transform((val) => new Date(val)).optional(),
         actualAmount: z.number().optional(),
         note: z.string().optional(),
