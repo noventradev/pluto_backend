@@ -55,8 +55,8 @@ model User {
 
   isActive Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   createdBy String?
@@ -67,7 +67,7 @@ model User {
   orgMemberships OrganizationUser[]
 
   // Finance relations
-  incomeSources   IncomeSource[]
+  incomeSources     IncomeSource[]
   expenseCategories ExpenseCategory[]
 
   // Audit tracking
@@ -108,9 +108,30 @@ model User {
   expenseCategoriesCreated ExpenseCategory[] @relation("ExpenseCategoryCreatedBy")
   expenseCategoriesUpdated ExpenseCategory[] @relation("ExpenseCategoryUpdatedBy")
   expenseCategoriesDeleted ExpenseCategory[] @relation("ExpenseCategoryDeletedBy")
-  expenseStreamsCreated ExpenseStream[] @relation("ExpenseStreamCreatedBy")
-  expenseStreamsUpdated ExpenseStream[] @relation("ExpenseStreamUpdatedBy")
-  expenseStreamsDeleted ExpenseStream[] @relation("ExpenseStreamDeletedBy")
+  expenseStreamsCreated    ExpenseStream[]   @relation("ExpenseStreamCreatedBy")
+  expenseStreamsUpdated    ExpenseStream[]   @relation("ExpenseStreamUpdatedBy")
+  expenseStreamsDeleted    ExpenseStream[]   @relation("ExpenseStreamDeletedBy")
+
+  // Deal audit
+  deals        Deal[]
+  dealsCreated Deal[] @relation("DealCreatedBy")
+  dealsUpdated Deal[] @relation("DealUpdatedBy")
+  dealsDeleted Deal[] @relation("DealDeletedBy")
+
+  //Deal split audit
+  dealSplitsCreated DealSplit[] @relation("DealSplitCreatedBy")
+  dealSplitsUpdated DealSplit[] @relation("DealSplitUpdatedBy")
+  dealSplitsDeleted DealSplit[] @relation("DealSplitDeletedBy")
+
+  // payment tab audit
+  paymentCreated Payment[] @relation("PaymentCreatedBy")
+  paymentUpdated Payment[] @relation("PaymentUpdatedBy")
+  paymentDeleted Payment[] @relation("PaymentDeletedBy")
+
+  // Amendments audit
+  amendmentCreated Amendment[] @relation("AmendmentCreatedBy")
+  amendmentUpdated Amendment[] @relation("AmendmentUpdatedBy")
+  amendmentDeleted Amendment[] @relation("AmendmentDeletedBy")
 }
 
 model Organization {
@@ -124,8 +145,8 @@ model Organization {
 
   isActive Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   createdBy String?
@@ -139,19 +160,20 @@ model Organization {
 
   // Ownership
   ownerId String?
-  owner   User? @relation(fields: [ownerId], references: [id])
+  owner   User?   @relation(fields: [ownerId], references: [id])
 
   // Members
   users OrganizationUser[]
 
   // Finance relations
-  incomeSources    IncomeSource[]
-  incomeStreams    IncomeStream[]
-  incomeEntries    IncomeEntry[]
+  incomeSources IncomeSource[]
+  incomeStreams IncomeStream[]
+  incomeEntries IncomeEntry[]
 
   expenseCategories ExpenseCategory[]
   expenseStreams    ExpenseStream[]
   expenseEntries    ExpenseEntry[]
+  deals             Deal[]
 
   @@index([ownerId])
 }
@@ -163,8 +185,8 @@ model Role {
 
   isActive Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   createdBy String?
@@ -182,8 +204,8 @@ model Role {
 }
 
 model Permission {
-  id          String @id @default(uuid())
-  name        String @unique
+  id          String  @id @default(uuid())
+  name        String  @unique
   description String?
 
   createdAt DateTime @default(now())
@@ -210,11 +232,11 @@ model OrganizationUser {
 
   isActive Boolean @default(true)
 
-  joinedAt DateTime @default(now())
+  joinedAt DateTime  @default(now())
   leftAt   DateTime?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   // REQUIRED FIELDS
@@ -237,18 +259,18 @@ model OrganizationUser {
 }
 
 model IncomeSource {
-  id             String   @id @default(uuid())
+  id             String @id @default(uuid())
   organizationId String
   userId         String
 
-  sourceOfIncome   String
-  name   String
-  type  IncomeType
+  sourceOfIncome String
+  name           String
+  type           IncomeType
 
   isActive Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   createdByUser User? @relation("IncomeSourceCreatedBy", fields: [createdBy], references: [id])
@@ -268,7 +290,7 @@ model IncomeSource {
 }
 
 model IncomeStream {
-  id             String   @id @default(uuid())
+  id             String @id @default(uuid())
   organizationId String
   sourceId       String
 
@@ -281,10 +303,10 @@ model IncomeStream {
 
   isActive Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  
+
   createdBy String?
   updatedBy String?
   deletedBy String?
@@ -303,7 +325,7 @@ model IncomeStream {
 }
 
 model IncomeEntry {
-  id             String   @id @default(uuid())
+  id             String @id @default(uuid())
   organizationId String
   streamId       String
 
@@ -315,10 +337,10 @@ model IncomeEntry {
   status EntryStatus @default(PENDING)
 
   // metadata Json?
-  note     String?
+  note String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   createdBy String?
@@ -331,13 +353,13 @@ model IncomeEntry {
 
   organization Organization @relation(fields: [organizationId], references: [id])
   stream       IncomeStream @relation(fields: [streamId], references: [id])
-  
+
   @@index([organizationId])
   @@index([streamId])
 }
 
 model ExpenseCategory {
-  id             String   @id @default(uuid())
+  id             String @id @default(uuid())
   organizationId String
   userId         String
 
@@ -347,8 +369,8 @@ model ExpenseCategory {
 
   isActive Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   createdBy String?
@@ -375,14 +397,14 @@ model ExpenseStream {
   startDate DateTime
   endDate   DateTime?
 
-  frequency      Frequency
-  baseAmount         Float
-  currency       String
+  frequency  Frequency
+  baseAmount Float
+  currency   String
 
   isActive Boolean @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   createdBy String?
@@ -393,7 +415,7 @@ model ExpenseStream {
   updatedByUser User? @relation("ExpenseStreamUpdatedBy", fields: [updatedBy], references: [id])
   deletedByUser User? @relation("ExpenseStreamDeletedBy", fields: [deletedBy], references: [id])
 
-  organization Organization   @relation(fields: [organizationId], references: [id])
+  organization Organization    @relation(fields: [organizationId], references: [id])
   category     ExpenseCategory @relation(fields: [categoryId], references: [id])
 
   entries ExpenseEntry[]
@@ -407,14 +429,14 @@ model ExpenseEntry {
   organizationId String
   streamId       String
 
-  date DateTime
+  date   DateTime
   amount Float
 
   status ExpenseStatus @default(PENDING)
-  note     String?
+  note   String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   createdBy String?
@@ -425,9 +447,223 @@ model ExpenseEntry {
   updatedByUser User? @relation("UpdatedExpenseEntries", fields: [updatedBy], references: [id])
   deletedByUser User? @relation("DeletedExpenseEntries", fields: [deletedBy], references: [id])
 
-  organization Organization @relation(fields: [organizationId], references: [id])
+  organization Organization  @relation(fields: [organizationId], references: [id])
   stream       ExpenseStream @relation(fields: [streamId], references: [id])
 
   @@index([organizationId])
   @@index([streamId])
+}
+
+enum DealStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  CLOSED
+  CANCELLED
+}
+
+enum DealType {
+  sponsorship
+  affiliate
+  licensing
+  retainer
+}
+
+enum OwnerType {
+  org
+  individual
+}
+
+enum CounterpartyType {
+  brand
+  org
+  individual
+}
+
+enum RecurrenceInterval {
+  weekly
+  monthly
+  quarterly
+  yearly
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum AmendmentReason {
+  VALUE_CHANGE
+  SCOPE_CHANGE
+  EXTENSION
+  EARLY_TERMINATION
+  OTHER
+}
+
+// ─── Deal ─────────────────────────────────────────────────────────────────────
+
+model Deal {
+  id       String     @id @default(cuid())
+  title    String
+  dealType DealType
+  status   DealStatus @default(DRAFT)
+
+  // ownership
+  userOwnerId String?
+  orgOwnerId  String?
+
+  userOwner                User?            @relation(fields: [userOwnerId], references: [id])
+  orgOwner                 Organization?    @relation(fields: [orgOwnerId], references: [id])
+  // counterparty (embedded — no Pluto account)
+  counterPartyName         String
+  counterPartyEmail        String
+  counterPartyType         CounterpartyType
+  counterPartyContactPhone String?
+
+  // chain
+  parentDealId String?
+  parent       Deal?   @relation("DealChain", fields: [parentDealId], references: [id])
+  children     Deal[]  @relation("DealChain")
+
+  // financials
+  currency    Currency
+  agreedValue Decimal  @db.Decimal(14, 2)
+  cycleAmount Decimal? @db.Decimal(14, 2) // null = one-time
+  paidValue   Decimal  @default(0) @db.Decimal(14, 2)
+
+  // schedule
+  isRecurring        Boolean             @default(false)
+  recurrenceInterval RecurrenceInterval?
+  nextPaymentDate    DateTime?
+
+  // dates
+  startDate DateTime  @db.Date
+  endDate   DateTime? @db.Date
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  //Audits for 
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+
+  createdByUser User? @relation("DealCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("DealUpdatedBy", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("DealDeletedBy", fields: [deletedBy], references: [id])
+
+  // near future
+  invoiceId   String?
+  contractUrl String?
+  notes       String?
+
+  // relations
+  payments   Payment[]
+  amendments Amendment[]
+  splits     DealSplit[] @relation("ParentSplits")
+
+  @@index([userOwnerId])
+  @@index([orgOwnerId])
+  @@index([parentDealId])
+  @@index([nextPaymentDate])
+  @@index([status])
+}
+
+// ─── DealSplit ────────────────────────────────────────────────────────────────
+// One row per creator/participant in a fan-out.
+// parentDealId → the brand deal
+// childDealId  → the individual creator deal
+
+model DealSplit {
+  id            String  @id @default(cuid())
+  parentDealId  String
+  childDealId   String  @unique // each child belongs to exactly one split
+  participantId String // usr- or org- id
+  amount        Decimal @db.Decimal(14, 2)
+  label         String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+
+  createdByUser User? @relation("DealSplitCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("DealSplitUpdatedBy", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("DealSplitDeletedBy", fields: [deletedBy], references: [id])
+  parent        Deal  @relation("ParentSplits", fields: [parentDealId], references: [id])
+
+  @@index([parentDealId])
+  @@index([participantId])
+}
+
+// ─── Payment ──────────────────────────────────────────────────────────────────
+
+model Payment {
+  id        String        @id @default(cuid())
+  dealId    String
+
+  amount    Decimal       @db.Decimal(14, 2)
+  currency  Currency
+
+  dueDate   DateTime      @db.Date
+  paidAt    DateTime?
+  
+  status    PaymentStatus @default(PENDING)
+  reference String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+
+  createdByUser User? @relation("PaymentCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("PaymentUpdatedBy", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("PaymentDeletedBy", fields: [deletedBy], references: [id])
+
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@index([dealId, status])
+  @@index([status, dueDate]) // for querying overdue across all deals
+}
+
+// ─── Amendment ────────────────────────────────────────────────────────────────
+
+model Amendment {
+  id                  String          @id @default(cuid())
+  dealId              String
+  reason              AmendmentReason
+  effectiveFrom       DateTime        @db.Date
+  previousAgreedValue Decimal         @db.Decimal(14, 2)
+  newAgreedValue      Decimal         @db.Decimal(14, 2)
+  previousCycleAmount Decimal?        @db.Decimal(14, 2)
+  newCycleAmount      Decimal?        @db.Decimal(14, 2)
+  changePct           Decimal         @db.Decimal(7, 4) // e.g. 12.0000
+  note                String?
+  recordedAt          DateTime        @default(now())
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+
+  createdByUser User? @relation("AmendmentCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User? @relation("AmendmentUpdatedBy", fields: [updatedBy], references: [id])
+  deletedByUser User? @relation("AmendmentDeletedBy", fields: [deletedBy], references: [id])
+
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
 }
