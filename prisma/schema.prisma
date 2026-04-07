@@ -278,6 +278,7 @@ model IncomeStream {
   frequency  Frequency
   baseAmount Float
   currency   Currency
+  isRecurring Boolean @default(false)
 
   isActive Boolean @default(true)
 
@@ -378,6 +379,7 @@ model ExpenseStream {
   frequency      Frequency
   baseAmount         Float
   currency       String
+  isRecurring Boolean @default(false)
 
   isActive Boolean @default(true)
 
