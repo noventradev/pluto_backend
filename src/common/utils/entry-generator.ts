@@ -22,7 +22,7 @@ export const generateEntryDates = (
                 next.setDate(next.getDate() + 7);
                 break;
             case Frequency.MONTHLY:
-                next.setDate(next.getMonth() + 1);
+                next.setMonth(next.getMonth() + 1);
                 break;
             case Frequency.YEARLY:
                 next.setFullYear(next.getFullYear() + 1);
