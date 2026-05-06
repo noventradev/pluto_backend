@@ -1,6 +1,6 @@
 import { Currency, PaymentStatus, Prisma, RecurrenceInterval } from "@prisma/client";
 
-function generatePaymentSchedule(
+export function generatePaymentSchedule(
     dealId: string,
     currency: Currency,
     agreedValue: number,
@@ -12,6 +12,9 @@ function generatePaymentSchedule(
     nextPaymentDate: Date | null,
     createdBy: string,
 ): Prisma.PaymentCreateManyInput[] {
+    if (!createdBy) {
+        createdBy = process.env.SUPER_ADMIN_ID ?? "";
+    }
 
     if (!isRecurring || !cycleAmount || !recurrenceInterval || !nextPaymentDate) {
         return [{

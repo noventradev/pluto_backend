@@ -11,7 +11,7 @@ import { z } from "zod";
 const SUPER_ADMIN_ID = process.env.SUPER_ADMIN_ID;
 
 if (!SUPER_ADMIN_ID) {
-  throw new Error('SUPER_ADMIN_ID is not defined');
+  throw new Error("SUPER_ADMIN_ID is not defined");
 }
 export const createDealSchema = z
   .object({
@@ -20,8 +20,12 @@ export const createDealSchema = z
     status: z.nativeEnum(DealStatus).default(DealStatus.DRAFT),
 
     // ownership — one of these must be set (mirrors schema: userOwnerId / orgOwnerId)
-    // CHANGE THIS WHILE AUTH TESTING 
-    userOwnerId: z.string().nullable().optional().transform((val) => val ?? SUPER_ADMIN_ID),
+    // CHANGE THIS WHILE AUTH TESTING
+    userOwnerId: z
+      .string()
+      .nullable()
+      .optional()
+      .transform((val) => val ?? SUPER_ADMIN_ID),
     orgOwnerId: z.string().nullable().optional(),
 
     // counterparty flat fields — mirrors schema column names exactly
@@ -31,7 +35,6 @@ export const createDealSchema = z
       type: z.nativeEnum(CounterpartyType),
       contactPhone: z.string().nullable().optional(),
     }),
-
 
     // chain
     parentDealId: z.string().nullable().optional(),
@@ -62,7 +65,7 @@ export const createDealSchema = z
         type: data.counterparty.type,
         contactPhone: data.counterparty.contactPhone,
       },
-    }
+    };
   })
   .refine((data) => data.userOwnerId || data.orgOwnerId, {
     message: "Either userOwnerId or orgOwnerId is required",
@@ -72,21 +75,14 @@ export const createDealSchema = z
     message: "A deal can only have one owner (user or org, not both)",
     path: ["orgOwnerId"],
   })
-  .refine(
-    (data) =>
-      !data.isRecurring || (data.recurrenceInterval && data.nextPaymentDate),
-    {
-      message: "Recurring deals require recurrenceInterval and nextPaymentDate",
-      path: ["isRecurring"],
-    },
-  )
-  .refine(
-    (data) => !data.isRecurring || data.cycleAmount != null,
-    {
-      message: "Recurring deals require a cycleAmount",
-      path: ["cycleAmount"],
-    },
-  )
+  .refine((data) => !data.isRecurring || data.recurrenceInterval, {
+    message: "Recurring deals require recurrenceInterval",
+    path: ["isRecurring"],
+  })
+  .refine((data) => !data.isRecurring || data.cycleAmount != null, {
+    message: "Recurring deals require a cycleAmount",
+    path: ["cycleAmount"],
+  })
   .refine((data) => !data.endDate || data.endDate >= data.startDate, {
     message: "endDate must be on or after startDate",
     path: ["endDate"],

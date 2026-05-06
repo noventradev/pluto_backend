@@ -578,11 +578,14 @@ model Deal {
 // childDealId  → the individual creator deal
 
 model DealSplit {
-  id            String  @id @default(cuid())
+  id            String   @id @default(cuid())
+
   parentDealId  String
-  childDealId   String  @unique // each child belongs to exactly one split
+  childDealId   String   @unique // each child belongs to exactly one split
   participantId String // usr- or org- id
-  amount        Decimal @db.Decimal(14, 2)
+  
+  agreedValue        Decimal  @db.Decimal(14, 2) //full payment info
+  cycleAmount   Decimal? @db.Decimal(14, 2) // null = one-timer
   label         String?
 
   createdAt DateTime  @default(now())
@@ -605,15 +608,15 @@ model DealSplit {
 // ─── Payment ──────────────────────────────────────────────────────────────────
 
 model Payment {
-  id        String        @id @default(cuid())
-  dealId    String
+  id     String @id @default(cuid())
+  dealId String
 
-  amount    Decimal       @db.Decimal(14, 2)
-  currency  Currency
+  amount   Decimal  @db.Decimal(14, 2)
+  currency Currency
 
-  dueDate   DateTime      @db.Date
-  paidAt    DateTime?
-  
+  dueDate DateTime  @db.Date
+  paidAt  DateTime?
+
   status    PaymentStatus @default(PENDING)
   reference String?
 

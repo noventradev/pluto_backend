@@ -2,9 +2,15 @@ import { AuthUser } from "common/types/common.types";
 import { createDealRequestDTO } from "./Deal.types";
 import { DealRepository } from "./Deal.repository";
 
+interface SplitPayload {
+  participantId: string
+  agreedValue: number
+  cycleAmount?: number | null
+  label: string
+}
 export const DealService = {
   async create(dto: createDealRequestDTO, user: AuthUser) {
-    console.log("dto", dto);
+    // console.log("dto", dto);
     const today = new Date();
 
     // Ensure nextPaymentDate is not in the past for recurring deals
@@ -54,4 +60,39 @@ export const DealService = {
 
     return DealRepository.createDeal(payload);
   },
+  async getAll(user: AuthUser) {
+    console.log("user", user);
+    if (!user.id) {
+      throw new Error("User ID is required");
+    }
+    return DealRepository.getAll(user.id);
+  },
+  async getById(id: string, user: AuthUser) {
+    console.log("user", user);
+    if (!user.id) {
+      throw new Error("User ID is required");
+    }
+    return DealRepository.getById(id);
+  },
+  async createSplit(id: string, dto: any, user: AuthUser) {
+    console.log("dto", dto);
+    console.log("id", id);
+
+    const parentDealId = id;
+    const splitPayload: SplitPayload = {
+      participantId: dto.participantId,
+      label: dto.label,
+      agreedValue: dto.agreedValue,
+      cycleAmount: dto.cycleAmount,
+
+    }
+    return DealRepository.createSplit(parentDealId, splitPayload);
+  },
+  async getSplits(id: string, user: AuthUser) {
+    console.log("user", user);
+    if (!user.id) {
+      throw new Error("User ID is required");
+    }
+    return DealRepository.getSplits(id);
+  }
 };
