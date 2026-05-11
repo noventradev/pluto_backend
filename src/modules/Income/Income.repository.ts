@@ -14,9 +14,15 @@ export const IncomeRepository = {
 
             const stream = await tx.incomeStream.create({
                 data: {
-                    ...data.stream,
-                    sourceId: source.id,
+                    startDate: data.stream.startDate,
+                    ...(data.stream.endDate ? { endDate: data.stream.endDate } : {}),
+                    ...(data.stream.frequency ? { frequency: data.stream.frequency } : {}),
+                    ...(data.stream.baseAmount ? { baseAmount: data.stream.baseAmount } : {}),
+                    currency: data.stream.currency,
                     isRecurring: data.isRecurring,
+                    organization: { connect: { id: data.stream.organizationId } },
+                    source: { connect: { id: source.id } },
+                    ...(data.stream.createdBy ? { createdByUser: { connect: { id: data.stream.createdBy } } } : {}),
                 },
             });
 

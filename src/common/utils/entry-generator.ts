@@ -3,7 +3,7 @@ import { Frequency } from "@prisma/client";
 export const generateEntryDates = (
     startDate: Date,
     endDate: Date | null | undefined,
-    frequency: Frequency,
+    frequency: Frequency | null,
     upToDate?: Date
 ): Date[] => {
     const dates: Date[] = [];
@@ -33,8 +33,8 @@ export const generateEntryDates = (
         return next;
     };
 
-    // If ONE_TIME, just return startDate if it's within limits
-    if (frequency === Frequency.ONE_TIME) {
+    // If frequency is null or ONE_TIME, just return startDate if it's within limits
+    if (!frequency || frequency === Frequency.ONE_TIME) {
         if ((!end || currentDate <= end) && (!limit || currentDate <= limit)) {
             dates.push(new Date(currentDate));
         }

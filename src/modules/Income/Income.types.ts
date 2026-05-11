@@ -16,8 +16,8 @@ export interface IncomeStreamData {
   sourceId?: string;
   startDate: Date;
   endDate?: Date | null;
-  frequency: Frequency;
-  baseAmount: number;
+  frequency: Frequency | null;
+  baseAmount: number | null;
   currency: Currency;
   isRecurring: boolean;
   isActive?: boolean;
@@ -45,9 +45,9 @@ export interface CreateIncomeRequestDto {
 
   stream: {
     startDate: Date;
-    endDate?: Date;
-    frequency: Frequency;
-    baseAmount: number;
+    endDate?: Date | null;
+    frequency?: Frequency;
+    baseAmount?: number | null;
     currency: Currency;
   };
 

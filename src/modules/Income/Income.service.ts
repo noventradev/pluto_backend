@@ -25,7 +25,7 @@ export const IncomeService = {
         const entryDates = generateEntryDates(
             stream.startDate,
             stream.endDate,
-            stream.frequency,
+            stream.frequency ?? null,
             upToDate
         );
 
@@ -40,6 +40,8 @@ export const IncomeService = {
 
             stream: {
                 ...stream,
+                frequency: stream.frequency ?? null,
+                baseAmount: stream.baseAmount ?? null,
                 isRecurring,
                 organizationId: user.organizationId!,
                 createdBy: user.id,
@@ -103,7 +105,7 @@ export const IncomeService = {
             newEntryDates = generateEntryDates(
                 mergedStream.startDate,
                 mergedStream.endDate,
-                mergedStream.frequency,
+                mergedStream.frequency ?? null,
                 upToDate
             );
         } else {
@@ -179,6 +181,7 @@ export const IncomeService = {
 
         let nextStartDate = new Date(lastDate);
         if (lastEntry) {
+            if (!stream.frequency) return; // null frequency = non-recurring, nothing to sync
             switch (stream.frequency) {
                 case "DAILY": nextStartDate.setDate(nextStartDate.getDate() + 1); break;
                 case "WEEKLY": nextStartDate.setDate(nextStartDate.getDate() + 7); break;
@@ -193,7 +196,7 @@ export const IncomeService = {
         const missingDates = generateEntryDates(
             nextStartDate,
             stream.endDate,
-            stream.frequency,
+            stream.frequency ?? null,
             upToDate
         );
 

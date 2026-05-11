@@ -1,31 +1,31 @@
 export enum Frequency {
-  DAILY,
-  WEEKLY,
-  MONTHLY,
-  YEARLY,
-  ONE_TIME,
+  DAILY = 'DAILY',
+  WEEKLY = 'WEEKLY',
+  MONTHLY = 'MONTHLY',
+  YEARLY = 'YEARLY',
+  ONE_TIME = 'ONE_TIME',
 }
 
 export enum EntryStatus {
-  PENDING,
-  RECEIVED,
-  FAILED,
+  PENDING = 'PENDING',
+  RECEIVED = 'RECEIVED',
+  COMPLETED = 'COMPLETED',
 }
 
 export enum ExpenseStatus {
-  PENDING,
-  PAID,
-  CANCELLED,
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+  CANCELLED = 'CANCELLED',
 }
 
-export enum IncomeModel {
-  ONE_TIME,
-  RECURRING,
-  CONTRACT,
+export enum IncomeType {
+  ONE_TIME = 'ONE_TIME',
+  RECURRING = 'RECURRING',
+  CONTRACT = 'CONTRACT',
 }
 
 export enum Currency {
-  INR,
-  USD,
-  GBP,
+  INR = 'INR',
+  USD = 'USD',
+  GBP = 'GBP',
 }

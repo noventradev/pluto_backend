@@ -21,6 +21,7 @@ export const initIncomeEntryJob = () => {
                 // If it's the very first entry, we start at startDate. 
                 // If we already have entries, we start at the next interval.
                 if (lastEntry) {
+                    if (!stream.frequency) continue; // null frequency = non-recurring, skip
                     switch (stream.frequency) {
                         case Frequency.DAILY: nextStartDate.setDate(nextStartDate.getDate() + 1); break;
                         case Frequency.WEEKLY: nextStartDate.setDate(nextStartDate.getDate() + 7); break;

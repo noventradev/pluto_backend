@@ -275,8 +275,8 @@ model IncomeStream {
   startDate DateTime
   endDate   DateTime?
 
-  frequency  Frequency
-  baseAmount Float
+  frequency  Frequency?
+  baseAmount Float?
   currency   Currency
   isRecurring Boolean @default(false)
 

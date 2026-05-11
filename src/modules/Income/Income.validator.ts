@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const createIncomeSchema = z.object({
+    isRecurring: z.boolean(),
     source: z.object({
         sourceOfIncome: z.string(),
         name: z.string(),
@@ -8,9 +9,9 @@ export const createIncomeSchema = z.object({
     }),
     stream: z.object({
         startDate: z.string().transform((val) => new Date(val)),
-        endDate: z.string().optional().transform((val) => val ? new Date(val) : undefined),
-        frequency: z.enum(["DAILY", "WEEKLY", "MONTHLY", "YEARLY", "ONE_TIME"]),
-        baseAmount: z.number(),
+        endDate: z.string().nullable().optional().transform((val) => val ? new Date(val) : undefined),
+        frequency: z.enum(["DAILY", "WEEKLY", "MONTHLY", "YEARLY", "ONE_TIME"]).nullable(),
+        baseAmount: z.number().nullable(),
         currency: z.enum(["INR", "USD", "GBP"]),
     }),
     entry: z.object({
@@ -21,6 +22,7 @@ export const createIncomeSchema = z.object({
 });
 
 export const updateIncomeSchema = z.object({
+    isRecurring: z.boolean().optional(),
     source: z.object({
         sourceOfIncome: z.string().optional(),
         name: z.string().optional(),
@@ -30,8 +32,8 @@ export const updateIncomeSchema = z.object({
         id: z.string().optional(),
         startDate: z.string().transform((val) => new Date(val)).optional(),
         endDate: z.string().optional().transform((val) => val ? new Date(val) : undefined).optional(),
-        frequency: z.enum(["DAILY", "WEEKLY", "MONTHLY", "YEARLY", "ONE_TIME"]).optional(),
-        baseAmount: z.number().optional(),
+        frequency: z.enum(["DAILY", "WEEKLY", "MONTHLY", "YEARLY", "ONE_TIME"]).nullable().optional(),
+        baseAmount: z.number().nullable().optional(),
         currency: z.enum(["INR", "USD", "GBP"]).optional(),
     }).optional(),
     entry: z.object({
