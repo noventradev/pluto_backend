@@ -24,16 +24,13 @@ export interface PaginationQuery {
 
 export interface JwtPayload {
   userId: string;
-  email: string;
-  organizationId?: string;
-  roleId?: string;
-  roleName?: string;
 }
 
 export interface AuthUser {
   id: string;
-  email: string;
-  role: string;
+  userId?: string;
+  email?: string;
+  role?: string;
   organizationId?: string;
 }
 
